@@ -1,48 +1,62 @@
-import 'package:flame/components.dart';
-import 'package:flame/collisions.dart';
+import 'dart:math';
+import 'package:flame/game.dart';
+import 'package:flame/input.dart';
 import 'package:flutter/material.dart';
+import 'player.dart';
 import 'spike.dart';
+import 'coin.dart';
 
-class PlayerBalloon extends CircleComponent
-    with CollisionCallbacks, HasGameRef {
-  double velocityY = 0;
-  final double gravity = 900;
-  final double liftForce = -350;
-
-  PlayerBalloon({required Vector2 position})
-      : super(
-          position: position,
-          radius: 14,
-          paint: Paint()..color = Colors.black,
-          anchor: Anchor.center,
-        );
+class BalloonGame extends FlameGame
+    with TapDetector, HasCollisionDetection {
+  late PlayerBalloon player;
+  double spawnTimer = 0;
+  final Random rng = Random();
+  int score = 0;
 
   @override
   Future<void> onLoad() async {
-    add(CircleHitbox());
+    camera.viewport.backgroundColor = Colors.white;
+
+    player = PlayerBalloon(position: Vector2.zero());
+    add(player);
+  }
+
+  @override
+  void onGameResize(Vector2 gameSize) {
+    super.onGameResize(gameSize);
+
+    // Place player ONLY when size is known
+    player.position = gameSize / 2;
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    velocityY += gravity * dt;
-    position.y += velocityY * dt;
 
-    if (position.y < 0 || position.y > gameRef.size.y) {
-      gameRef.pauseEngine();
+    spawnTimer += dt;
+    if (spawnTimer > 1.2) {
+      spawnTimer = 0;
+      _spawnObstacles();
     }
   }
 
-  void lift() {
-    velocityY = liftForce;
+  void _spawnObstacles() {
+    final y = -40.0;
+
+    add(Spike(
+      position: Vector2(rng.nextDouble() * size.x, y),
+    ));
+
+    if (rng.nextBool()) {
+      add(Coin(
+        position: Vector2(rng.nextDouble() * size.x, y - 60),
+        onCollect: () => score++,
+      ));
+    }
   }
 
   @override
-  void onCollisionStart(
-      Set<Vector2> intersectionPoints, PositionComponent other) {
-    if (other is Spike) {
-      gameRef.pauseEngine();
-    }
-    super.onCollisionStart(intersectionPoints, other);
+  void onTapDown(TapDownInfo info) {
+    player.lift();
   }
 }
