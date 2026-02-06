@@ -1,4 +1,4 @@
-name: Flutter Android Build
+name: Flutter APK Build (Runtime Scaffold)
 
 on:
   push:
@@ -9,7 +9,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -17,17 +18,17 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Flutter doctor
-        run: flutter doctor -v
+      # IMPORTANT: create Flutter app scaffold at runtime
+      - name: Create Flutter app
+        run: |
+          flutter create .
+          flutter pub get
 
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Build APK
+      - name: Build release APK
         run: flutter build apk --release
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: balloon-game-apk
+          name: app-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
