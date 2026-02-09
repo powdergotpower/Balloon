@@ -1,8 +1,10 @@
-name: Flutter APK Build (Runtime Scaffold)
+name: Build Flutter APK
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -12,29 +14,46 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 🔑 REQUIRED FOR ANDROID / GRADLE
+      # Flutter setup with caching
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.x'     # ← upgrade from 3.22.3 (more stable in 2026)
+          channel: 'stable'
+          cache: true
+          cache-key: flutter-${{ runner.os }}-stable-3.24.x  # optional: better caching
+
+      # Java (required for Android build)
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: "3.22.3"
-          cache: true
+      # Get dependencies (your real pubspec.yaml)
+      - name: Install dependencies
+        run: flutter pub get
 
-      - name: Create Flutter app
-        run: |
-          flutter create . --project-name balloon_game
-          flutter pub get
+      # Optional: upgrade packages (helps fix old Flame bugs)
+      - name: Upgrade packages (allow major version bumps)
+        run: flutter pub upgrade --major-versions
+        continue-on-error: true   # don't fail whole build if conflicts exist
 
+      # Optional: analyze code (catches some issues early)
+      - name: Analyze code
+        run: flutter analyze
+
+      # Build release APK (split per ABI = smaller files)
       - name: Build release APK
-        run: flutter build apk --release --verbose
+        run: flutter build apk --release --split-per-abi --verbose
 
-      - name: Upload APK
+      # Upload all generated APKs as artifacts
+      - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: release-apks
+          path: build/app/outputs/flutter-apk/*.apk
+          retention-days: 7
+
+      # Optional: if you want only arm64 (most common today)
+      # flutter build apk --release --target-platform android-arm64
