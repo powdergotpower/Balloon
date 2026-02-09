@@ -20,12 +20,6 @@ jobs:
           flutter-version: '3.24.x'
           channel: 'stable'
           cache: true
-          cache-key: flutter-${{ runner.os }}-stable-3.24.x
-
-      - name: Show Flutter version and doctor
-        run: |
-          flutter --version
-          flutter doctor -v
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -36,11 +30,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Upgrade packages (optional)
-        run: flutter pub upgrade --major-versions
-        continue-on-error: true
-
-      # This is the key fix: ignore fatal deprecations + continue even if warnings
       - name: Analyze code (non-fatal)
         run: flutter analyze --no-fatal-infos --no-fatal-warnings --fatal-deprecations=false || true
 
