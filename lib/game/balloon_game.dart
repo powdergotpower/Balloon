@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flame/game.dart';
 import 'package:flame/events.dart';
-import 'package:flame/components.dart'; // Vector2 + more
 import 'package:flutter/material.dart';
 
 import 'player.dart';
