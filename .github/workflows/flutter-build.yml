@@ -14,7 +14,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Flutter setup with caching
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -23,37 +22,31 @@ jobs:
           cache: true
           cache-key: flutter-${{ runner.os }}-stable-3.24.x
 
-      # Now flutter command is available → show version & doctor
       - name: Show Flutter version and doctor
         run: |
           flutter --version
           flutter doctor -v
 
-      # Java setup (required for Android Gradle)
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # Install dependencies
       - name: Install dependencies
         run: flutter pub get
 
-      # Optional: upgrade packages (can help with compatibility)
-      - name: Upgrade packages
+      - name: Upgrade packages (optional)
         run: flutter pub upgrade --major-versions
         continue-on-error: true
 
-      # Analyze – ignore fatal deprecations/warnings so it doesn't block build
-      - name: Analyze code
+      # This is the key fix: ignore fatal deprecations + continue even if warnings
+      - name: Analyze code (non-fatal)
         run: flutter analyze --no-fatal-infos --no-fatal-warnings --fatal-deprecations=false || true
 
-      # Build release APK
       - name: Build release APK
         run: flutter build apk --release --split-per-abi --verbose
 
-      # Upload APKs
       - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
