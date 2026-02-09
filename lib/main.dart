@@ -5,8 +5,21 @@ import 'game/balloon_game.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
-    GameWidget(
-      game: BalloonGame(),
+    const MaterialApp(
+      home: GamePage(),
     ),
   );
+}
+
+class GamePage extends StatelessWidget {
+  const GamePage({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: GameWidget(
+        game: BalloonGame(),
+      ),
+    );
+  }
 }
