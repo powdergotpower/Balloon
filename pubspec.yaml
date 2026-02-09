@@ -3,13 +3,12 @@ description: Hot air balloon game
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.3.0 <4.0.0"
+  sdk: ">=3.4.0 <4.0.0"
 
 dependencies:
   flutter:
     sdk: flutter
-  flame: ^1.18.0  #or ^1.22.0 for latest compatible with Flutter 3.24.x
-
+  flame: ^1.35.0
 
 flutter:
   uses-material-design: true
