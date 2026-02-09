@@ -1,62 +1,67 @@
-import 'dart:math';
-import 'package:flame/game.dart';
-import 'package:flame/input.dart';
+import 'package:flame/components.dart';
+import 'package:flame/events.dart';
+import 'package:flame/geometry.dart';
 import 'package:flutter/material.dart';
-import 'player.dart';
-import 'spike.dart';
-import 'coin.dart';
 
-class BalloonGame extends FlameGame
-    with TapDetector, HasCollisionDetection {
-  late PlayerBalloon player;
-  double spawnTimer = 0;
-  final Random rng = Random();
-  int score = 0;
+// Assuming this is your player component
+// Replace the body with your actual player logic (circle, sprite, physics, etc.)
+class PlayerBalloon extends PositionComponent
+    with HasGameRef<BalloonGame> {
+  // Example properties – adjust to your needs
+  double liftForce = -250.0; // upward force when tapped
+  double gravity = 400.0;
+  double velocityY = 0.0;
+
+  PlayerBalloon({required Vector2 position})
+      : super(position: position, size: Vector2(60, 80), anchor: Anchor.center);
 
   @override
   Future<void> onLoad() async {
-    camera.viewport.backgroundColor = Colors.white;
-
-    player = PlayerBalloon(position: Vector2.zero());
-    add(player);
-  }
-
-  @override
-  void onGameResize(Vector2 gameSize) {
-    super.onGameResize(gameSize);
-
-    // Place player ONLY when size is known
-    player.position = gameSize / 2;
+    super.onLoad();
+    // Example: add a simple circle shape (replace with SpriteComponent if using image)
+    add(
+      CircleComponent(
+        radius: 30,
+        paint: Paint()..color = Colors.blue,
+      ),
+    );
   }
 
   @override
   void update(double dt) {
     super.update(dt);
 
-    spawnTimer += dt;
-    if (spawnTimer > 1.2) {
-      spawnTimer = 0;
-      _spawnObstacles();
+    // Simple gravity + velocity
+    velocityY += gravity * dt;
+    position.y += velocityY * dt;
+
+    // Optional: keep player within screen bounds
+    if (position.y > gameRef.size.y - 40) {
+      position.y = gameRef.size.y - 40;
+      velocityY = 0;
+    }
+    if (position.y < 40) {
+      position.y = 40;
+      velocityY = 0;
     }
   }
 
-  void _spawnObstacles() {
-    final y = -40.0;
-
-    add(Spike(
-      position: Vector2(rng.nextDouble() * size.x, y),
-    ));
-
-    if (rng.nextBool()) {
-      add(Coin(
-        position: Vector2(rng.nextDouble() * size.x, y - 60),
-        onCollect: () => score++,
-      ));
-    }
+  void lift() {
+    velocityY = liftForce; // jump/lift up on tap
   }
 
+  // Optional: collision handling example
   @override
-  void onTapDown(TapDownInfo info) {
-    player.lift();
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollision(intersectionPoints, other);
+
+    if (other is Spike) {
+      // Game over logic
+      gameRef.pauseEngine();
+      // or show overlay, etc.
+    } else if (other is Coin) {
+      other.removeFromParent(); // collect coin
+      // score++ is handled in Coin's onCollect callback
+    }
   }
 }
