@@ -1,6 +1,8 @@
 import 'dart:math';
+
 import 'package:flame/game.dart';
 import 'package:flame/events.dart';
+import 'package:flame/geometry.dart'; // for Vector2
 import 'package:flutter/material.dart';
 
 import 'player.dart';
@@ -15,12 +17,22 @@ class BalloonGame extends FlameGame
   int score = 0;
 
   @override
-  Color backgroundColor() => Colors.white;
+  Color backgroundColor() => Colors.white; // or Colors.blueGrey, etc.
 
   @override
   Future<void> onLoad() async {
+    super.onLoad();
+
+    // Center player when game size is known (safer than size/2 in onLoad)
     player = PlayerBalloon(position: size / 2);
     add(player);
+  }
+
+  @override
+  void onGameResize(Vector2 gameSize) {
+    super.onGameResize(gameSize);
+    // Optional: reposition player if needed after resize
+    // player.position = gameSize / 2;
   }
 
   @override
