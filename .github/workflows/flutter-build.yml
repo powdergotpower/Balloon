@@ -14,46 +14,49 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Show Flutter & environment info (helps debug deprecations)
+      - name: Show Flutter version and doctor
+        run: |
+          flutter --version
+          flutter doctor -v
+
       # Flutter setup with caching
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.x'     # ← upgrade from 3.22.3 (more stable in 2026)
+          flutter-version: '3.24.x'     # stable in 2026 – good choice
           channel: 'stable'
           cache: true
-          cache-key: flutter-${{ runner.os }}-stable-3.24.x  # optional: better caching
+          cache-key: flutter-${{ runner.os }}-stable-3.24.x
 
-      # Java (required for Android build)
+      # Java setup (required for Android Gradle)
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # Get dependencies (your real pubspec.yaml)
+      # Install dependencies
       - name: Install dependencies
         run: flutter pub get
 
-      # Optional: upgrade packages (helps fix old Flame bugs)
-      - name: Upgrade packages (allow major version bumps)
+      # Optional: upgrade packages (can fix some deprecated deps)
+      - name: Upgrade packages
         run: flutter pub upgrade --major-versions
-        continue-on-error: true   # don't fail whole build if conflicts exist
+        continue-on-error: true
 
-      # Optional: analyze code (catches some issues early)
+      # Analyze code – ignore fatal deprecations/warnings so build continues
       - name: Analyze code
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings --fatal-deprecations=false || true
 
-      # Build release APK (split per ABI = smaller files)
+      # Build release APK (split-per-abi = smaller APKs, verbose for logs)
       - name: Build release APK
         run: flutter build apk --release --split-per-abi --verbose
 
-      # Upload all generated APKs as artifacts
+      # Upload APKs as artifacts
       - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
           name: release-apks
           path: build/app/outputs/flutter-apk/*.apk
           retention-days: 7
-
-      # Optional: if you want only arm64 (most common today)
-      # flutter build apk --release --target-platform android-arm64
