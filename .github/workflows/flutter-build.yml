@@ -14,20 +14,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Show Flutter & environment info (helps debug deprecations)
-      - name: Show Flutter version and doctor
-        run: |
-          flutter --version
-          flutter doctor -v
-
       # Flutter setup with caching
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.x'     # stable in 2026 – good choice
+          flutter-version: '3.24.x'
           channel: 'stable'
           cache: true
           cache-key: flutter-${{ runner.os }}-stable-3.24.x
+
+      # Now flutter command is available → show version & doctor
+      - name: Show Flutter version and doctor
+        run: |
+          flutter --version
+          flutter doctor -v
 
       # Java setup (required for Android Gradle)
       - name: Set up Java
@@ -40,20 +40,20 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # Optional: upgrade packages (can fix some deprecated deps)
+      # Optional: upgrade packages (can help with compatibility)
       - name: Upgrade packages
         run: flutter pub upgrade --major-versions
         continue-on-error: true
 
-      # Analyze code – ignore fatal deprecations/warnings so build continues
+      # Analyze – ignore fatal deprecations/warnings so it doesn't block build
       - name: Analyze code
         run: flutter analyze --no-fatal-infos --no-fatal-warnings --fatal-deprecations=false || true
 
-      # Build release APK (split-per-abi = smaller APKs, verbose for logs)
+      # Build release APK
       - name: Build release APK
         run: flutter build apk --release --split-per-abi --verbose
 
-      # Upload APKs as artifacts
+      # Upload APKs
       - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
